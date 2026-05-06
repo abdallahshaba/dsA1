@@ -1,3 +1,8 @@
+// ============================================================
+// route_history.dart — Search History Model
+// ELE253 – Data Structures and Algorithms
+// ============================================================
+
 class RouteHistory {
   final String start;
   final String end;
@@ -19,5 +24,11 @@ class RouteHistory {
     final h = timestamp.hour.toString().padLeft(2, '0');
     final m = timestamp.minute.toString().padLeft(2, '0');
     return '$h:$m';
+  }
+
+  String get dateLabel {
+    final d = timestamp.day.toString().padLeft(2, '0');
+    final mo = timestamp.month.toString().padLeft(2, '0');
+    return '$d/$mo/${timestamp.year}';
   }
 }
