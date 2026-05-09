@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'graph.dart';
 import 'dijkstra.dart';
-import 'route_history.dart';
 import 'map_page.dart';
 import 'app_locale.dart';
 
@@ -10,9 +9,8 @@ class ResultPage extends StatelessWidget {
   final Graph graph;
   final String start;
   final String end;
-  final List<RouteHistory> history;
 
-  const ResultPage({super.key, required this.result, required this.graph, required this.start, required this.end, required this.history});
+  const ResultPage({super.key, required this.result, required this.graph, required this.start, required this.end});
 
   void _goToMap(BuildContext ctx) => Navigator.push(ctx, MaterialPageRoute(builder: (_) => MapPage(graph: graph, result: result, start: start, end: end)));
 

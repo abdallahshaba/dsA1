@@ -51,7 +51,7 @@ class Dijkstra {
 
     while (done.length != graph.adjList.length) {
       String? current;
-      int minDist = 999999;
+      int minDist = 999999;   // الكود دا بيشوف اي اقرب مدينة   
       for (final node in dist.keys) {
         if (!done.contains(node) && dist[node]! < minDist) {
           minDist = dist[node]!;

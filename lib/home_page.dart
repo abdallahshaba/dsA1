@@ -2,16 +2,11 @@ import 'package:flutter/material.dart';
 import 'graph.dart';
 import 'dijkstra.dart';
 import 'bellman_ford.dart';
-import 'route_history.dart';
 import 'result_page.dart';
-import 'history_page.dart';
-import 'graph_info_page.dart';
 import 'comparison_page.dart';
 import 'benchmark_page.dart';
 import 'complexity_page.dart';
 import 'graph_editor_page.dart';
-import 'algorithm_visualizer_page.dart';
-import 'route_cost_page.dart';
 import 'about_page.dart';
 import 'app_locale.dart';
 
@@ -25,11 +20,8 @@ class _HomePageState extends State<HomePage> {
   final Graph _graph = Graph();
   String? _start;
   String? _end;
-  int? _maxHops;
   bool _loading = false;
   String _algo = 'Dijkstra';
-  final List<RouteHistory> _history = [];
-  RouteResult? _lastResult;
 
   @override
   void initState() { super.initState(); _buildGraph(); }
@@ -67,16 +59,12 @@ class _HomePageState extends State<HomePage> {
 
     final result = _algo == 'Bellman-Ford'
         ? BellmanFord.shortestPath(_graph, _start!, _end!)
-        : Dijkstra.shortestPath(_graph, _start!, _end!, maxHops: _maxHops);
+        : Dijkstra.shortestPath(_graph, _start!, _end!);
 
-    _lastResult = result;
-    if (result.pathFound) {
-      _history.insert(0, RouteHistory(start: _start!, end: _end!, distance: result.distance, hops: result.hops, path: result.path, timestamp: DateTime.now()));
-    }
     setState(() => _loading = false);
     if (!mounted) return;
     Navigator.push(context, PageRouteBuilder(
-      pageBuilder: (_, a, __) => ResultPage(result: result, graph: _graph, start: _start!, end: _end!, history: _history),
+      pageBuilder: (_, a, __) => ResultPage(result: result, graph: _graph, start: _start!, end: _end!),
       transitionsBuilder: (_, a, __, child) => FadeTransition(opacity: a, child: child),
       transitionDuration: const Duration(milliseconds: 300),
     ));
@@ -96,12 +84,6 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         title: Text(L.t('Smart Route Finder'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 19)),
         centerTitle: true,
-        actions: [
-          IconButton(icon: const Icon(Icons.history), tooltip: L.t('History'),
-              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => HistoryPage(history: _history)))),
-          IconButton(icon: const Icon(Icons.info_outline), tooltip: L.t('Graph Info'),
-              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => GraphInfoPage(graph: _graph)))),
-        ],
       ),
       drawer: _buildDrawer(cs),
       body: SingleChildScrollView(
@@ -131,13 +113,7 @@ class _HomePageState extends State<HomePage> {
           Text(L.t('Destination City'), style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: cs.onSurface)),
           const SizedBox(height: 6),
           _dropdown(hint: L.t('Select destination city'), icon: Icons.location_on, iconColor: Colors.green, value: _end, nodes: nodes, onChanged: (v) => setState(() => _end = v), cs: cs),
-          const SizedBox(height: 16),
-          if (_algo != 'Compare') ...[
-            Text(L.t('Max Stops (optional)'), style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: cs.onSurface)),
-            const SizedBox(height: 6),
-            _hopsRow(cs),
-            const SizedBox(height: 24),
-          ],
+          const SizedBox(height: 24),
           _loading ? const Center(child: CircularProgressIndicator())
               : ElevatedButton.icon(
                   onPressed: _findPath,
@@ -171,12 +147,8 @@ class _HomePageState extends State<HomePage> {
       _drawerItem(Icons.home, L.t('Home'), () => Navigator.pop(context)),
       _drawerItem(Icons.analytics, L.t('Performance Benchmark'), () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const BenchmarkPage())); }),
       _drawerItem(Icons.school, L.t('Complexity Analysis'), () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const ComplexityPage())); }),
-      _drawerItem(Icons.play_circle_outline, L.t('Algorithm Visualizer'), () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => AlgorithmVisualizerPage(graph: _graph))); }),
-      _drawerItem(Icons.attach_money, L.t('Travel Cost Estimator'), () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => RouteCostPage(result: _lastResult, start: _start ?? '', end: _end ?? ''))); }),
       const Divider(),
       _drawerItem(Icons.edit, L.t('Graph Editor'), () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => GraphEditorPage(graph: _graph, onChanged: () => setState(() {})))); }),
-      _drawerItem(Icons.info_outline, L.t('Graph Info'), () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => GraphInfoPage(graph: _graph))); }),
-      _drawerItem(Icons.history, L.t('Search History'), () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => HistoryPage(history: _history))); }),
       const Divider(),
       _drawerItem(Icons.info, L.t('About'), () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const AboutPage())); }),
     ]),
@@ -234,26 +206,7 @@ class _HomePageState extends State<HomePage> {
         ]),
       );
 
-  Widget _hopsRow(ColorScheme cs) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-    decoration: BoxDecoration(color: cs.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: cs.outlineVariant)),
-    child: Row(children: [
-      Icon(Icons.route, color: cs.onSurfaceVariant, size: 20), const SizedBox(width: 8),
-      Expanded(child: Text(_maxHops == null ? L.t('No limit') : '$_maxHops ${L.t('max stops')}', style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant))),
-      _hopChip(L.t('Any'), _maxHops == null, () => setState(() => _maxHops = null), cs),
-      const SizedBox(width: 4),
-      for (final h in [1, 2, 3, 4]) ...[
-        _hopChip('$h', _maxHops == h, () => setState(() => _maxHops = h), cs),
-        const SizedBox(width: 4),
-      ],
-    ]),
-  );
 
-  Widget _hopChip(String label, bool sel, VoidCallback onTap, ColorScheme cs) => GestureDetector(onTap: onTap,
-    child: Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(color: sel ? cs.primary : cs.surfaceContainerHighest, borderRadius: BorderRadius.circular(20)),
-      child: Text(label, style: TextStyle(fontSize: 12, color: sel ? cs.onPrimary : cs.onSurfaceVariant, fontWeight: FontWeight.w600)),
-    ));
 
   Widget _algoCard(ColorScheme cs) => Container(
     padding: const EdgeInsets.all(14),
