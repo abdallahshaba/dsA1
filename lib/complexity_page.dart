@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'app_locale.dart';
 
 class ComplexityPage extends StatelessWidget {
   const ComplexityPage({super.key});
@@ -9,50 +8,79 @@ class ComplexityPage extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      appBar: AppBar(title: Text(L.t('Complexity Analysis'), style: const TextStyle(fontWeight: FontWeight.bold)), centerTitle: true),
+      appBar: AppBar(title: const Text('Complexity Analysis')),
       body: SingleChildScrollView(padding: const EdgeInsets.all(16), child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          _sectionCard(context, L.t('Dijkstra\'s Algorithm'), Icons.speed, cs.primary, [
-            _subTitle(L.t('Description')),
-            Text(L.t('A greedy algorithm that finds the shortest path from a single source to all other vertices in a weighted graph with non-negative edge weights. It works by always selecting the unvisited vertex with the smallest known distance and relaxing its neighbors.'),
-                style: const TextStyle(height: 1.6, fontSize: 13)),
-            const SizedBox(height: 16), _subTitle(L.t('Pseudocode')),
+          _sectionCard(context, 'Bubble Sort', Icons.bubble_chart, cs.primary, [
+            _subTitle('Description'),
+            const Text('A simple comparison-based sorting algorithm. It repeatedly steps through the list, '
+                'compares adjacent elements, and swaps them if they are in the wrong order. '
+                'The pass through the list is repeated until the list is sorted.',
+                style: TextStyle(height: 1.6, fontSize: 13)),
+            const SizedBox(height: 16), _subTitle('Pseudocode'),
             _codeBlock(isDark,
-              'DIJKSTRA(G, source, target):\n  for each vertex v in G:\n    dist[v] ← ∞\n    prev[v] ← NULL\n  dist[source] ← 0\n  Q ← all vertices\n\n  while Q is not empty:\n    u ← vertex in Q with min dist[u]\n    remove u from Q\n    for each neighbor v of u:\n      alt ← dist[u] + weight(u, v)\n      if alt < dist[v]:\n        dist[v] ← alt\n        prev[v] ← u\n\n  return dist[], prev[]'),
-            const SizedBox(height: 16), _subTitle(L.t('Complexity')),
-            _complexityTable(context, 'O(V²)', 'O(V²)', 'O(V²)', 'O(V + E)'),
+              'BUBBLE-SORT(A, n):\n'
+              '  for i = 0 to n-2:\n'
+              '    swapped = false\n'
+              '    for j = 0 to n-i-2:\n'
+              '      if A[j] > A[j+1]:\n'
+              '        swap(A[j], A[j+1])\n'
+              '        swapped = true\n'
+              '    if not swapped:\n'
+              '      break    // Early termination'),
+            const SizedBox(height: 16), _subTitle('Complexity'),
+            _complexityTable(context, 'O(n)', 'O(n²)', 'O(n²)', 'O(1)'),
           ]),
           const SizedBox(height: 16),
-          _sectionCard(context, L.t('Bellman-Ford Algorithm'), Icons.all_inclusive, Colors.orange, [
-            _subTitle(L.t('Description')),
-            Text(L.t('A dynamic programming algorithm that computes shortest paths from a single source vertex to all other vertices. Unlike Dijkstra, it can handle negative edge weights and detect negative cycles. It relaxes all edges V-1 times.'),
-                style: const TextStyle(height: 1.6, fontSize: 13)),
-            const SizedBox(height: 16), _subTitle(L.t('Pseudocode')),
+          _sectionCard(context, 'Merge Sort', Icons.call_split, Colors.orange, [
+            _subTitle('Description'),
+            const Text('A divide-and-conquer algorithm that splits the list into halves, '
+                'recursively sorts each half, and merges the sorted halves back together. '
+                'It guarantees O(n log n) performance in all cases.',
+                style: TextStyle(height: 1.6, fontSize: 13)),
+            const SizedBox(height: 16), _subTitle('Pseudocode'),
             _codeBlock(isDark,
-              'BELLMAN-FORD(G, source, target):\n  for each vertex v in G:\n    dist[v] ← ∞\n    prev[v] ← NULL\n  dist[source] ← 0\n\n  for i from 1 to |V| - 1:\n    for each edge (u, v, w) in G:\n      if dist[u] + w < dist[v]:\n        dist[v] ← dist[u] + w\n        prev[v] ← u\n\n  // Negative cycle detection\n  for each edge (u, v, w) in G:\n    if dist[u] + w < dist[v]:\n      return "Negative cycle!"\n\n  return dist[], prev[]'),
-            const SizedBox(height: 16), _subTitle(L.t('Complexity')),
-            _complexityTable(context, 'O(V·E)', 'O(V·E)', 'O(V+E)*', 'O(V)'),
+              'MERGE-SORT(A):\n'
+              '  if length(A) <= 1:\n'
+              '    return A\n'
+              '  mid = length(A) / 2\n'
+              '  left = MERGE-SORT(A[0..mid])\n'
+              '  right = MERGE-SORT(A[mid..n])\n'
+              '  return MERGE(left, right)\n'
+              '\n'
+              'MERGE(L, R):\n'
+              '  result = []\n'
+              '  while L and R not empty:\n'
+              '    if L[0] <= R[0]:\n'
+              '      result.add(L.removeFirst)\n'
+              '    else:\n'
+              '      result.add(R.removeFirst)\n'
+              '  result.addAll(remaining)'),
+            const SizedBox(height: 16), _subTitle('Complexity'),
+            _complexityTable(context, 'O(n log n)', 'O(n log n)', 'O(n log n)', 'O(n)'),
           ]),
           const SizedBox(height: 16),
-          _sectionCard(context, L.t('Head-to-Head Comparison'), Icons.compare_arrows, Colors.purple, [
+          _sectionCard(context, 'Head-to-Head Comparison', Icons.compare_arrows, Colors.purple, [
             _comparisonTable(context),
-            const SizedBox(height: 16), _subTitle(L.t('When to Use Which?')),
-            _bulletPoint(L.t('Use Dijkstra when all edge weights are non-negative — it\'s faster.')),
-            _bulletPoint(L.t('Use Bellman-Ford when the graph may have negative weights.')),
-            _bulletPoint(L.t('Bellman-Ford can detect negative cycles; Dijkstra cannot.')),
-            _bulletPoint(L.t('For sparse graphs, Dijkstra with a min-heap is O((V+E) log V).')),
+            const SizedBox(height: 16), _subTitle('When to Use Which?'),
+            _bulletPoint('Use Bubble Sort for very small lists (n < 20) or educational purposes.'),
+            _bulletPoint('Use Merge Sort for large datasets where performance matters.'),
+            _bulletPoint('Bubble Sort is in-place (O(1) space); Merge Sort needs O(n) extra space.'),
+            _bulletPoint('Both are stable — equal elements maintain their relative order.'),
+            _bulletPoint('Merge Sort is preferred in practice for its guaranteed O(n log n).'),
           ]),
           const SizedBox(height: 16),
-          _sectionCard(context, L.t('Data Structure: Adjacency List'), Icons.account_tree, Colors.teal, [
-            Text(L.isArabic
-                ? 'نمثل الرسم البياني كقائمة تجاور (Map<String, Map<String, int>>). كل مفتاح هو مدينة، وقيمته تربط المدن المجاورة بأوزان الحواف.'
-                : 'We represent the graph as an adjacency list (Map<String, Map<String, int>>). Each key is a city, and its value maps neighboring cities to edge weights.',
-                style: const TextStyle(height: 1.6, fontSize: 13)),
-            const SizedBox(height: 12), _subTitle(L.t('Why Adjacency List over Matrix?')),
-            _bulletPoint(L.t('Our graph is sparse (E=16 << V²=196) — list saves memory.')),
-            _bulletPoint(L.t('Adjacency List: O(V+E) space vs Matrix: O(V²) space.')),
-            _bulletPoint(L.t('Iterating neighbors is O(degree) vs O(V) for matrix.')),
-            _bulletPoint(L.t('Adding/removing edges is O(1) for both.')),
+          _sectionCard(context, 'Data Structure: Array (List)', Icons.view_list, Colors.teal, [
+            const Text('We use a dynamic array (Dart List<int>) to store the data. '
+                'Arrays provide O(1) random access by index, which is essential for '
+                'comparison and swap operations in sorting algorithms.',
+                style: TextStyle(height: 1.6, fontSize: 13)),
+            const SizedBox(height: 12), _subTitle('Why Array over Linked List?'),
+            _bulletPoint('Arrays have O(1) random access; Linked Lists have O(n).'),
+            _bulletPoint('Sorting needs frequent index-based access (arr[j], arr[j+1]).'),
+            _bulletPoint('Arrays have better cache locality — faster in practice.'),
+            _bulletPoint('Swap operation is O(1) for arrays using index.'),
+            _bulletPoint('Linked Lists are better for frequent insertions/deletions, not sorting.'),
           ]),
           const SizedBox(height: 24),
         ])),
@@ -62,8 +90,9 @@ class ComplexityPage extends StatelessWidget {
   Widget _sectionCard(BuildContext context, String title, IconData icon, Color accent, List<Widget> children) {
     final cs = Theme.of(context).colorScheme;
     return Container(padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(color: cs.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: cs.outlineVariant),
-          boxShadow: [BoxShadow(color: accent.withOpacity(0.08), blurRadius: 12, offset: const Offset(0, 4))]),
+      decoration: BoxDecoration(color: cs.surface, borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: cs.outlineVariant),
+          boxShadow: [BoxShadow(color: accent.withValues(alpha: 0.08), blurRadius: 12, offset: const Offset(0, 4))]),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [Icon(icon, color: accent, size: 22), const SizedBox(width: 10),
           Expanded(child: Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: cs.onSurface)))]),
@@ -75,8 +104,10 @@ class ComplexityPage extends StatelessWidget {
       child: Text(t, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)));
 
   Widget _codeBlock(bool isDark, String code) => Container(width: double.infinity, padding: const EdgeInsets.all(14),
-    decoration: BoxDecoration(color: isDark ? const Color(0xFF1E1E2E) : const Color(0xFFF5F5F5), borderRadius: BorderRadius.circular(10)),
-    child: Text(code, style: TextStyle(fontFamily: 'monospace', fontSize: 11.5, height: 1.5, color: isDark ? const Color(0xFFCDD6F4) : Colors.black87)));
+    decoration: BoxDecoration(color: isDark ? const Color(0xFF1E1E2E) : const Color(0xFFF5F5F5),
+        borderRadius: BorderRadius.circular(10)),
+    child: Text(code, style: TextStyle(fontFamily: 'monospace', fontSize: 11.5, height: 1.5,
+        color: isDark ? const Color(0xFFCDD6F4) : Colors.black87)));
 
   Widget _bulletPoint(String text) => Padding(padding: const EdgeInsets.symmetric(vertical: 3),
     child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -87,23 +118,24 @@ class ComplexityPage extends StatelessWidget {
   Widget _complexityTable(BuildContext ctx, String best, String avg, String worst, String space) {
     final cs = Theme.of(ctx).colorScheme;
     return Table(border: TableBorder.all(color: cs.outlineVariant, borderRadius: BorderRadius.circular(8)), children: [
-      _tableRow(ctx, [L.t('Case'), L.t('Time'), L.t('Space')], header: true),
-      _tableRow(ctx, [L.t('Best'), best, space]),
-      _tableRow(ctx, [L.t('Average'), avg, space]),
-      _tableRow(ctx, [L.t('Worst'), worst, space]),
+      _tableRow(ctx, ['Case', 'Time', 'Space'], header: true),
+      _tableRow(ctx, ['Best', best, space]),
+      _tableRow(ctx, ['Average', avg, space]),
+      _tableRow(ctx, ['Worst', worst, space]),
     ]);
   }
 
   Widget _comparisonTable(BuildContext ctx) {
     final cs = Theme.of(ctx).colorScheme;
     return Table(border: TableBorder.all(color: cs.outlineVariant, borderRadius: BorderRadius.circular(8)), children: [
-      _tableRow(ctx, [L.t('Feature'), 'Dijkstra', 'Bellman-Ford'], header: true),
-      _tableRow(ctx, [L.t('Time'), 'O(V²)', 'O(V·E)']),
-      _tableRow(ctx, [L.t('Space'), 'O(V+E)', 'O(V)']),
-      _tableRow(ctx, [L.t('Neg. Weights'), '✗', '✓']),
-      _tableRow(ctx, [L.t('Neg. Cycles'), '✗', '✓ ${L.t('Detect')}']),
-      _tableRow(ctx, [L.t('Approach'), L.t('Greedy'), L.t('Dynamic Prog.')]),
-      _tableRow(ctx, [L.t('Faster?'), '✓ ${L.t('Usually')}', '✗ ${L.t('Slower')}']),
+      _tableRow(ctx, ['Feature', 'Bubble', 'Merge'], header: true),
+      _tableRow(ctx, ['Best Time', 'O(n)', 'O(n log n)']),
+      _tableRow(ctx, ['Worst Time', 'O(n²)', 'O(n log n)']),
+      _tableRow(ctx, ['Space', 'O(1)', 'O(n)']),
+      _tableRow(ctx, ['Stable?', 'Yes', 'Yes']),
+      _tableRow(ctx, ['Approach', 'Iterative', 'Divide & Conquer']),
+      _tableRow(ctx, ['In-place?', 'Yes', 'No']),
+      _tableRow(ctx, ['Adaptive?', 'Yes', 'No']),
     ]);
   }
 

@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
-import 'graph.dart';
-import 'dijkstra.dart';
-import 'bellman_ford.dart';
+import 'sorting_data.dart';
+import 'bubble_sort.dart';
+import 'merge_sort.dart';
 import 'result_page.dart';
 import 'comparison_page.dart';
 import 'benchmark_page.dart';
 import 'complexity_page.dart';
-import 'graph_editor_page.dart';
 import 'about_page.dart';
-import 'app_locale.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -17,172 +15,222 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final Graph _graph = Graph();
-  String? _start;
-  String? _end;
+  final _nameCtrl = TextEditingController();
+  final _gradeCtrl = TextEditingController();
+  final StudentList _students = StudentList([]);
+  String _algo = 'Bubble Sort';
   bool _loading = false;
-  String _algo = 'Dijkstra';
 
-  @override
-  void initState() { super.initState(); _buildGraph(); }
-
-  void _buildGraph() {
-    _graph.addEdge('Cairo', 'Giza', 20);
-    _graph.addEdge('Cairo', 'Alexandria', 220);
-    _graph.addEdge('Cairo', 'Suez', 134);
-    _graph.addEdge('Cairo', 'Ismailia', 120);
-    _graph.addEdge('Cairo', 'Aswan', 900);
-    _graph.addEdge('Giza', 'Fayoum', 100);
-    _graph.addEdge('Alexandria', 'Tanta', 94);
-    _graph.addEdge('Alexandria', 'Marsa Matruh', 290);
-    _graph.addEdge('Tanta', 'Cairo', 95);
-    _graph.addEdge('Fayoum', 'Minya', 170);
-    _graph.addEdge('Minya', 'Assiut', 120);
-    _graph.addEdge('Assiut', 'Sohag', 115);
-    _graph.addEdge('Sohag', 'Luxor', 160);
-    _graph.addEdge('Luxor', 'Aswan', 215);
-    _graph.addEdge('Suez', 'Ismailia', 78);
-    _graph.addEdge('Ismailia', 'Port Said', 85);
+  void _addStudent() {
+    final name = _nameCtrl.text.trim();
+    final grade = int.tryParse(_gradeCtrl.text.trim());
+    if (name.isEmpty) { _snack('Please enter student name'); return; }
+    if (grade == null || grade < 0 || grade > 100) { _snack('Enter a valid grade (0-100)'); return; }
+    setState(() {
+      _students.add(Student(name, grade));
+      _nameCtrl.clear();
+      _gradeCtrl.clear();
+    });
   }
 
-  Future<void> _findPath() async {
-    if (_start == null || _end == null) { _snack(L.t('Please select both cities.')); return; }
-    if (_start == _end) { _snack(L.t('Start and destination must be different.')); return; }
+  void _generateRandom() {
+    setState(() {
+      _students.data.clear();
+      _students.data.addAll(StudentList.random(15).data);
+    });
+    _snack('Generated 15 random students');
+  }
+
+  void _clearList() => setState(() => _students.clear());
+
+  void _sort() {
+    if (_students.length < 2) { _snack('Add at least 2 students'); return; }
 
     if (_algo == 'Compare') {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => ComparisonPage(graph: _graph, start: _start!, end: _end!)));
+      Navigator.push(context, MaterialPageRoute(
+          builder: (_) => ComparisonPage(data: _students.copy())));
       return;
     }
 
     setState(() => _loading = true);
-    await Future.delayed(const Duration(milliseconds: 200));
-
-    final result = _algo == 'Bellman-Ford'
-        ? BellmanFord.shortestPath(_graph, _start!, _end!)
-        : Dijkstra.shortestPath(_graph, _start!, _end!);
-
-    setState(() => _loading = false);
-    if (!mounted) return;
-    Navigator.push(context, PageRouteBuilder(
-      pageBuilder: (_, a, __) => ResultPage(result: result, graph: _graph, start: _start!, end: _end!),
-      transitionsBuilder: (_, a, __, child) => FadeTransition(opacity: a, child: child),
-      transitionDuration: const Duration(milliseconds: 300),
-    ));
+    Future.delayed(const Duration(milliseconds: 100), () {
+      final result = _algo == 'Merge Sort'
+          ? MergeSort.sort(_students.copy())
+          : BubbleSort.sort(_students.copy());
+      setState(() => _loading = false);
+      if (!mounted) return;
+      Navigator.push(context, MaterialPageRoute(
+          builder: (_) => ResultPage(result: result)));
+    });
   }
 
   void _snack(String msg) => ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))));
+      SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))));
 
-  void _swap() => setState(() { final t = _start; _start = _end; _end = t; });
+  @override
+  void dispose() { _nameCtrl.dispose(); _gradeCtrl.dispose(); super.dispose(); }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final nodes = _graph.getNodes()..sort();
-
     return Scaffold(
-      appBar: AppBar(
-        title: Text(L.t('Smart Route Finder'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 19)),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Student Grade Sorter')),
       drawer: _buildDrawer(cs),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Icon(Icons.map_outlined, size: 64, color: cs.primary),
+          Icon(Icons.school, size: 56, color: cs.primary),
           const SizedBox(height: 8),
-          Text(L.t('Find the shortest route between Egyptian cities'), textAlign: TextAlign.center,
+          Text('Sort students by their grades using different algorithms',
+              textAlign: TextAlign.center,
               style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant)),
           const SizedBox(height: 20),
-          _statsRow(cs),
+          // Stats
+          Row(children: [
+            _statCard('Students', '${_students.length}', Icons.people, Colors.blue, cs),
+            const SizedBox(width: 8),
+            _statCard('Sorted?', _students.length < 2 ? '—' : _students.isSorted ? 'Yes' : 'No',
+                Icons.check_circle, _students.isSorted ? Colors.green : Colors.orange, cs),
+            const SizedBox(width: 8),
+            _statCard('Algorithm', _algo.split(' ')[0], Icons.memory, Colors.purple, cs),
+          ]),
           const SizedBox(height: 20),
-          Text(L.t('Algorithm'), style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: cs.onSurface)),
+          // Algorithm selector
+          Text('Algorithm', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: cs.onSurface)),
           const SizedBox(height: 6),
           _algoSelector(cs),
           const SizedBox(height: 16),
-          Text(L.t('Starting City'), style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: cs.onSurface)),
+          // Add student
+          Text('Add Student', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: cs.onSurface)),
           const SizedBox(height: 6),
-          _dropdown(hint: L.t('Select starting city'), icon: Icons.my_location, iconColor: cs.primary, value: _start, nodes: nodes, onChanged: (v) => setState(() => _start = v), cs: cs),
+          Row(children: [
+            Expanded(flex: 3, child: TextField(controller: _nameCtrl,
+                decoration: InputDecoration(hintText: 'Student name',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10), isDense: true))),
+            const SizedBox(width: 8),
+            Expanded(flex: 2, child: TextField(controller: _gradeCtrl, keyboardType: TextInputType.number,
+                decoration: InputDecoration(hintText: 'Grade (0-100)',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10), isDense: true),
+                onSubmitted: (_) => _addStudent())),
+            const SizedBox(width: 8),
+            ElevatedButton(onPressed: _addStudent,
+                style: ElevatedButton.styleFrom(backgroundColor: cs.primary, foregroundColor: cs.onPrimary,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                child: const Text('Add')),
+          ]),
           const SizedBox(height: 10),
-          Center(child: GestureDetector(onTap: _swap, child: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: cs.primary.withOpacity(0.1), shape: BoxShape.circle, border: Border.all(color: cs.primary, width: 1.5)),
-            child: Icon(Icons.swap_vert, color: cs.primary, size: 22),
-          ))),
-          const SizedBox(height: 10),
-          Text(L.t('Destination City'), style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: cs.onSurface)),
-          const SizedBox(height: 6),
-          _dropdown(hint: L.t('Select destination city'), icon: Icons.location_on, iconColor: Colors.green, value: _end, nodes: nodes, onChanged: (v) => setState(() => _end = v), cs: cs),
-          const SizedBox(height: 24),
-          _loading ? const Center(child: CircularProgressIndicator())
+          Row(children: [
+            Expanded(child: OutlinedButton.icon(onPressed: _generateRandom,
+                icon: const Icon(Icons.shuffle, size: 18),
+                label: const Text('Random 15'),
+                style: OutlinedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))))),
+            const SizedBox(width: 8),
+            Expanded(child: OutlinedButton.icon(onPressed: _clearList,
+                icon: const Icon(Icons.delete_outline, size: 18),
+                label: const Text('Clear All'),
+                style: OutlinedButton.styleFrom(foregroundColor: Colors.red,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))))),
+          ]),
+          const SizedBox(height: 16),
+          // Current students
+          if (_students.length > 0) ...[
+            Text('Students (${_students.length})',
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: cs.onSurface)),
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(color: cs.surface, borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: cs.outlineVariant)),
+              child: Wrap(spacing: 6, runSpacing: 6,
+                  children: List.generate(_students.length, (i) {
+                    final s = _students.data[i];
+                    return Chip(
+                      avatar: CircleAvatar(backgroundColor: _gradeColor(s.grade),
+                          child: Text('${s.grade}', style: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold))),
+                      label: Text(s.name, style: const TextStyle(fontSize: 12)),
+                      deleteIcon: const Icon(Icons.close, size: 14),
+                      onDeleted: () => setState(() => _students.removeAt(i)),
+                      visualDensity: VisualDensity.compact,
+                    );
+                  })),
+            ),
+          ],
+          const SizedBox(height: 20),
+          // Sort button
+          _loading
+              ? const Center(child: CircularProgressIndicator())
               : ElevatedButton.icon(
-                  onPressed: _findPath,
+                  onPressed: _sort,
                   style: ElevatedButton.styleFrom(backgroundColor: cs.primary, foregroundColor: cs.onPrimary,
-                      padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                  icon: Icon(_algo == 'Compare' ? Icons.compare_arrows : Icons.directions, size: 22),
-                  label: Text(L.t(_algo == 'Compare' ? 'Compare Algorithms' : 'Find Shortest Path'),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                  icon: Icon(_algo == 'Compare' ? Icons.compare_arrows : Icons.sort, size: 22),
+                  label: Text(_algo == 'Compare' ? 'Compare Algorithms' : 'Sort Students',
                       style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
                 ),
           const SizedBox(height: 16),
-          _algoCard(cs),
-          const SizedBox(height: 12),
-          _complexityCard(cs),
+          _infoCard(cs),
           const SizedBox(height: 20),
         ]),
       ),
     );
   }
 
+  Color _gradeColor(int grade) {
+    if (grade >= 85) return Colors.green;
+    if (grade >= 70) return Colors.blue;
+    if (grade >= 50) return Colors.orange;
+    return Colors.red;
+  }
+
   Widget _buildDrawer(ColorScheme cs) => Drawer(
     child: ListView(padding: EdgeInsets.zero, children: [
       DrawerHeader(
-        decoration: BoxDecoration(gradient: LinearGradient(colors: [cs.primary, cs.tertiary], begin: Alignment.topLeft, end: Alignment.bottomRight)),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.end, children: [
-          const Icon(Icons.route, color: Colors.white, size: 40),
-          const SizedBox(height: 10),
-          Text(L.t('Smart Route Finder'), style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-          Text(L.t('ELE253 – DSA Project'), style: const TextStyle(color: Colors.white70, fontSize: 13)),
+        decoration: BoxDecoration(gradient: LinearGradient(colors: [cs.primary, cs.tertiary])),
+        child: const Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.end, children: [
+          Icon(Icons.school, color: Colors.white, size: 40),
+          SizedBox(height: 10),
+          Text('Student Grade Sorter', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+          Text('ELE253 – DSA Project', style: TextStyle(color: Colors.white70, fontSize: 13)),
         ]),
       ),
-      _drawerItem(Icons.home, L.t('Home'), () => Navigator.pop(context)),
-      _drawerItem(Icons.analytics, L.t('Performance Benchmark'), () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const BenchmarkPage())); }),
-      _drawerItem(Icons.school, L.t('Complexity Analysis'), () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const ComplexityPage())); }),
+      ListTile(leading: const Icon(Icons.home), title: const Text('Home'), onTap: () => Navigator.pop(context)),
+      ListTile(leading: const Icon(Icons.analytics), title: const Text('Performance Benchmark'), onTap: () {
+        Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const BenchmarkPage())); }),
+      ListTile(leading: const Icon(Icons.school), title: const Text('Complexity Analysis'), onTap: () {
+        Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const ComplexityPage())); }),
       const Divider(),
-      _drawerItem(Icons.edit, L.t('Graph Editor'), () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => GraphEditorPage(graph: _graph, onChanged: () => setState(() {})))); }),
-      const Divider(),
-      _drawerItem(Icons.info, L.t('About'), () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const AboutPage())); }),
+      ListTile(leading: const Icon(Icons.info), title: const Text('About'), onTap: () {
+        Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const AboutPage())); }),
     ]),
   );
-
-  Widget _drawerItem(IconData icon, String title, VoidCallback onTap) => ListTile(leading: Icon(icon), title: Text(title), onTap: onTap);
 
   Widget _algoSelector(ColorScheme cs) => Container(
     padding: const EdgeInsets.all(4),
     decoration: BoxDecoration(color: cs.surfaceContainerHighest, borderRadius: BorderRadius.circular(12)),
     child: Row(children: [
-      for (final a in ['Dijkstra', 'Bellman-Ford', 'Compare'])
+      for (final a in ['Bubble Sort', 'Merge Sort', 'Compare'])
         Expanded(child: GestureDetector(
           onTap: () => setState(() => _algo = a),
           child: AnimatedContainer(duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(vertical: 10),
             decoration: BoxDecoration(color: _algo == a ? cs.primary : Colors.transparent, borderRadius: BorderRadius.circular(10)),
-            child: Text(a == 'Compare' ? L.t('Compare') : a, textAlign: TextAlign.center, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _algo == a ? cs.onPrimary : cs.onSurfaceVariant)),
+            child: Text(a, textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
+                    color: _algo == a ? cs.onPrimary : cs.onSurfaceVariant)),
           ),
         )),
     ]),
   );
 
-  Widget _statsRow(ColorScheme cs) => Row(children: [
-    _statCard(L.t('Cities'), '${_graph.nodeCount}', Icons.location_city, Colors.blue, cs),
-    const SizedBox(width: 8),
-    _statCard(L.t('Roads'), '${_graph.edgeCount}', Icons.alt_route, Colors.green, cs),
-    const SizedBox(width: 8),
-    _statCard(L.t('Algorithm'), _algo == 'Compare' ? L.t('Both') : _algo.split('-')[0], Icons.memory, Colors.purple, cs),
-  ]);
-
   Widget _statCard(String label, String value, IconData icon, Color color, ColorScheme cs) => Expanded(
     child: Container(padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-      decoration: BoxDecoration(color: color.withOpacity(0.07), borderRadius: BorderRadius.circular(12), border: Border.all(color: color.withOpacity(0.2))),
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.07), borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.2))),
       child: Column(children: [
         Icon(icon, color: color, size: 20), const SizedBox(height: 4),
         Text(value, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: color)),
@@ -190,53 +238,19 @@ class _HomePageState extends State<HomePage> {
       ])),
   );
 
-  Widget _dropdown({required String hint, required IconData icon, required Color iconColor, required String? value, required List<String> nodes, required ValueChanged<String?> onChanged, required ColorScheme cs}) =>
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-        decoration: BoxDecoration(color: cs.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: cs.primary, width: 1.5),
-            boxShadow: [BoxShadow(color: cs.primary.withOpacity(0.07), blurRadius: 6, offset: const Offset(0, 2))]),
-        child: Row(children: [
-          Icon(icon, color: iconColor, size: 20), const SizedBox(width: 8),
-          Expanded(child: DropdownButtonHideUnderline(child: DropdownButton<String>(
-            hint: Text(hint, style: TextStyle(color: cs.onSurfaceVariant, fontSize: 14)),
-            value: value, isExpanded: true, dropdownColor: cs.surface,
-            items: nodes.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-            onChanged: onChanged,
-          ))),
-        ]),
-      );
-
-
-
-  Widget _algoCard(ColorScheme cs) => Container(
+  Widget _infoCard(ColorScheme cs) => Container(
     padding: const EdgeInsets.all(14),
-    decoration: BoxDecoration(color: cs.primaryContainer.withOpacity(0.4), borderRadius: BorderRadius.circular(12)),
+    decoration: BoxDecoration(color: cs.primaryContainer.withValues(alpha: 0.4), borderRadius: BorderRadius.circular(12)),
     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(children: [
         Icon(Icons.info_outline, size: 15, color: cs.primary), const SizedBox(width: 6),
-        Text(L.t('How it works'), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: cs.onSurface)),
+        Text('How it works', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: cs.onSurface)),
       ]),
       const SizedBox(height: 6),
-      Text(L.t(_algo == 'Bellman-Ford'
-          ? 'Bellman-Ford relaxes all edges V-1 times using dynamic programming. It handles negative weights and detects negative cycles.'
-          : 'Dijkstra\'s greedy algorithm explores nodes by increasing distance to guarantee the global shortest path for non-negative weights.'),
+      Text(_algo == 'Merge Sort'
+          ? 'Merge Sort divides the student list in half recursively, sorts each half by grade, then merges them. Always runs in O(n log n).'
+          : 'Bubble Sort compares adjacent students by grade and swaps them if out of order. Repeats until sorted. Runs in O(n²).',
           style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant, height: 1.5)),
     ]),
   );
-
-  Widget _complexityCard(ColorScheme cs) => Container(
-    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-    decoration: BoxDecoration(color: cs.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: cs.outlineVariant)),
-    child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-      _cx(L.t('Time'), _algo == 'Bellman-Ford' ? 'O(V·E)' : 'O(V²)', cs.primary),
-      _cx(L.t('Space'), _algo == 'Bellman-Ford' ? 'O(V)' : 'O(V+E)', Colors.green),
-      _cx('V', '${_graph.nodeCount} ${L.t('cities')}', Colors.orange),
-      _cx('E', '${_graph.edgeCount} ${L.t('roads')}', Colors.purple),
-    ]),
-  );
-
-  Widget _cx(String label, String value, Color color) => Column(children: [
-    Text(value, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: color)),
-    Text(label, style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant)),
-  ]);
 }

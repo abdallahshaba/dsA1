@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'app_locale.dart';
 
 class AboutPage extends StatelessWidget {
   const AboutPage({super.key});
@@ -8,80 +7,70 @@ class AboutPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(title: Text(L.t('About Project'), style: const TextStyle(fontWeight: FontWeight.bold)), centerTitle: true),
+      appBar: AppBar(title: const Text('About Project')),
       body: SingleChildScrollView(padding: const EdgeInsets.all(16), child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Header
+        crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           Container(padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(gradient: LinearGradient(colors: [cs.primary, cs.tertiary]), borderRadius: BorderRadius.circular(18)),
+            decoration: BoxDecoration(gradient: LinearGradient(colors: [cs.primary, cs.tertiary]),
+                borderRadius: BorderRadius.circular(18)),
             child: Column(children: [
               Container(padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), shape: BoxShape.circle),
-                child: const Icon(Icons.route, size: 48, color: Colors.white)),
+                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), shape: BoxShape.circle),
+                child: const Icon(Icons.school, size: 48, color: Colors.white)),
               const SizedBox(height: 14),
-              Text(L.t('Smart Route Finder'), style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+              const Text('Student Grade Sorter',
+                  style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
               const SizedBox(height: 6),
-              Text(L.t('ELE253 – DSA Project'), style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 13)),
+              Text('ELE253 – DSA Project',
+                  style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 13)),
             ])),
           const SizedBox(height: 16),
-
-          _infoCard(cs, L.t('Project Name'), [
-            _row(cs, Icons.app_shortcut, L.t('Smart Route Finder Pro')),
+          _infoCard(cs, 'Problem Statement', [
+            const Padding(padding: EdgeInsets.symmetric(vertical: 4),
+              child: Text('Universities need to sort and rank thousands of students by their grades efficiently. '
+                  'This app compares two sorting algorithms to find which is faster for different dataset sizes.',
+                  style: TextStyle(fontSize: 13, height: 1.6))),
           ]),
           const SizedBox(height: 12),
-
-          _infoCard(cs, L.t('Course'), [
+          _infoCard(cs, 'Course', [
             _row(cs, Icons.school, 'ELE253'),
-            _row(cs, Icons.book, L.t('Data Structures and Algorithms')),
+            _row(cs, Icons.book, 'Data Structures and Algorithms'),
           ]),
           const SizedBox(height: 12),
-
-          _infoCard(cs, L.t('Technology'), [
+          _infoCard(cs, 'Technology', [
             _row(cs, Icons.flutter_dash, 'Flutter & Dart'),
             _row(cs, Icons.design_services, 'Material Design 3'),
           ]),
           const SizedBox(height: 12),
-
-          _infoCard(cs, L.t('Libraries'), [
+          _infoCard(cs, 'Libraries', [
             _row(cs, Icons.bar_chart, 'fl_chart — Interactive Charts'),
-            _row(cs, Icons.font_download, 'google_fonts — Cairo & Inter'),
+            _row(cs, Icons.font_download, 'google_fonts — Inter font'),
           ]),
           const SizedBox(height: 12),
-
-          _infoCard(cs, L.t('Algorithms Used'), [
-            _row(cs, Icons.speed, "Dijkstra's Algorithm — O(V²)"),
-            _row(cs, Icons.all_inclusive, 'Bellman-Ford Algorithm — O(V·E)'),
+          _infoCard(cs, 'Algorithms', [
+            _row(cs, Icons.bubble_chart, 'Bubble Sort — O(n²) — Iterative'),
+            _row(cs, Icons.call_split, 'Merge Sort — O(n log n) — Divide & Conquer'),
           ]),
           const SizedBox(height: 12),
-
-          _infoCard(cs, L.t('Data Structures Used'), [
-            _row(cs, Icons.account_tree, L.t('Adjacency List (Map<String, Map<String, int>>)')),
-            _row(cs, Icons.sort, L.t('Priority Queue (simulated)')),
-            _row(cs, Icons.tag, L.t('Hash Map for distances')),
-          ]),
-          const SizedBox(height: 12),
-
-          _infoCard(cs, L.t('Version'), [
-            _row(cs, Icons.info_outline, '1.0.0+1'),
+          _infoCard(cs, 'Data Structure', [
+            _row(cs, Icons.view_list, 'Dynamic Array (List<Student>)'),
+            _row(cs, Icons.info_outline, 'Chosen over Linked List for O(1) random access'),
           ]),
           const SizedBox(height: 24),
-
           Center(child: Text('Made with ❤️ using Flutter',
               style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant))),
           const SizedBox(height: 20),
-        ],
-      )),
+        ])),
     );
   }
 
   Widget _infoCard(ColorScheme cs, String title, List<Widget> children) => Container(
     padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(color: cs.surface, borderRadius: BorderRadius.circular(14), border: Border.all(color: cs.outlineVariant)),
+    decoration: BoxDecoration(color: cs.surface, borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: cs.outlineVariant)),
     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: cs.onSurface)),
-      const SizedBox(height: 10),
-      ...children,
+      const SizedBox(height: 10), ...children,
     ]),
   );
 
